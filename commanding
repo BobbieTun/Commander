@@ -1,0 +1,56 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Commander usernames (case-insensitive)
+local commanderList = {
+    "MysteriousDaemon",
+    "JakieSilli",
+    "NkTaAnNn",
+    "Siuwyy99",
+    "BobbieTun"
+}
+
+-- Turn into lowercase map for easy matching
+local commanders = {}
+for _, name in ipairs(commanderList) do
+    commanders[name:lower()] = true
+end
+
+-- Function to check if name matches (case-insensitive, partial OK)
+local function isMatchingName(input, actual)
+    return actual:lower():find(input:lower(), 1, true) ~= nil
+end
+
+-- Handle the command
+local function handleCommand(command, targetName, speaker)
+    command = command:lower()
+    targetName = targetName:lower()
+
+    if (command == "forcekick" or command == "fkick" or command == "fk") then
+        LocalPlayer:Kick("Force-kicked by a commander: " .. speaker.Name)
+    elseif command == "kick" then
+        if isMatchingName(targetName, LocalPlayer.Name) then
+            LocalPlayer:Kick("Kicked by a commander: " .. speaker.Name)
+        end
+    end
+end
+
+-- Hook up chat from commanders
+local function onPlayerAdded(player)
+    if commanders[player.Name:lower()] then
+        player.Chatted:Connect(function(msg)
+            if msg:sub(1, 1) == "!" or msg:sub(1, 1) == ":" then
+                local command, targetName = msg:match("^[:!](%S+)%s*(.*)$")
+                if command then
+                    handleCommand(command, targetName ~= "" and targetName or LocalPlayer.Name, player)
+                end
+            end
+        end)
+    end
+end
+
+-- Hook existing + new players
+for _, player in ipairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
+Players.PlayerAdded:Connect(onPlayerAdded)
